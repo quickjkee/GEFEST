@@ -13,6 +13,36 @@ from gefest.core.structure.polygon import Polygon
 
 @dataclass
 class Structure:
+    """The geometrical object made up of :obj:`Polygon` objects
+        Args:
+            polygons: list of :obj:`Polygon` objects which form a combined set of polygons,
+                needed for joint processing capability of polygons
+        Attributes:
+            text_id: returns information about :obj:`Polygons` and :obj:`Points`
+                included in :obj:`Structure`
+            polygons: returns the :obj:`list` of :obj:`Polygon` objects
+            total_points: returns the :obj:`list` with lengths (number of :obj:`Point`)
+                of every :obj:`Polygon` included
+        Examples:
+            >>> from gefest.core.structure.point import Point
+            >>> from gefest.core.structure.polygon import Polygon
+            >>> from gefest.core.structure.structure import Structure
+            >>> # creating the rectangle Polygon
+            >>> points_rect = [Point(4,0), Point(8,0), Point(8,4), Point(4,4), Point(4,0)]
+            >>> rectangle = Polygon('rectangle', points=points_rect)
+            >>> # creating the triangle Polygon
+            >>> points_triagle = [Point(0,0), Point(3,3), Point(3,0), Point(0,0)]
+            >>> triangle = Polygon('triangle', points=points_triagle)
+            >>> # creating the Structure and plot it
+            >>> struct = Structure([triangle, rectangle])
+            >>> struct.text_id
+            'P0=4:(x=0, y=0); (x=3, y=3); (x=3, y=0); (x=0, y=0);
+            P1=5:(x=4, y=0); (x=8, y=0); (x=8, y=4); (x=4, y=4); (x=4, y=0); '
+            >>> struct.total_points
+            [4, 5]
+        Returns:
+            Structure: ``Structure(List[Polygon])``
+        """
     polygons: List[Polygon]
 
     def __str__(self):
@@ -39,11 +69,22 @@ class Structure:
     def length(self):
         return sum([p.length for p in self.polygons])
 
+    def total_points(self) -> list:
+        return [len(p.points) for p in self.polygons]
+
     @property
     def size(self):
         return sum([len(p.points) for p in self.polygons])
 
     def plot(self, structure, domain=None, title=None):
+        """Visualization with drawn :obj:`Strucrure`
+        Args:
+            title: the name of drawing, by default ``None``
+        Examples:
+            >>> struct.plot()
+        Returns:
+            plot: |viz|
+        """
         x = [point._x for point in structure.polygons[0].points]
         y = [point._y for point in structure.polygons[0].points]
         plt.plot(x, y)
@@ -109,7 +150,7 @@ def get_random_poly(parent_structure: Optional[Structure],
 
 def get_random_point(polygon: 'Polygon',
                      structure: 'Structure',
-                     domain: 'Domain'):
+                     domain: 'Domain') -> Optional[Point]:
     # Creating a point to fill the polygon
 
     centroid = domain.geometry.get_centroid(polygon)
@@ -127,7 +168,7 @@ def get_random_point(polygon: 'Polygon',
 def create_poly(centroid: 'Point',
                 sigma: int,
                 domain: 'Domain',
-                geometry: 'Geometry'):
+                geometry: 'Geometry') -> Polygon:
     # Creating polygon in the neighborhood of the centroid
     # sigma defines neighborhood
 
@@ -148,7 +189,7 @@ def create_poly(centroid: 'Point',
 
 def create_area(domain: 'Domain',
                 structure: 'Structure',
-                geometry: 'Geometry'):
+                geometry: 'Geometry') -> (Point, float):
     n_poly = len(structure.polygons)  # Number of already existing polygons
     area_size = np.random.randint(low=3, high=15)  # Neighborhood compression ratio
     sigma = max(domain.max_x - domain.min_x, domain.max_y - domain.min_y) / area_size  # Neighborhood size
@@ -176,7 +217,7 @@ def create_area(domain: 'Domain',
     return centroid, sigma
 
 
-def create_random_point(domain: 'Domain'):
+def create_random_point(domain: 'Domain') -> Point:
     point = Point(np.random.uniform(low=domain.min_x, high=domain.max_x),
                   np.random.uniform(low=domain.min_y, high=domain.max_y))
     while not in_bound(point, domain):
@@ -187,7 +228,7 @@ def create_random_point(domain: 'Domain'):
 
 
 def create_polygon_point(centroid: 'Point',
-                         sigma: int):
+                         sigma: int) -> Point:
     # Creating polygon point inside the neighborhood defined by the centroid
     point = Point(np.random.normal(centroid.x, sigma, 1)[0],
                   np.random.normal(centroid.y, sigma, 1)[0])
@@ -196,14 +237,14 @@ def create_polygon_point(centroid: 'Point',
 
 
 def in_bound(point: 'Point',
-             domain: 'Domain'):
+             domain: 'Domain') -> bool:
     poly_domain = Polygon(polygon_id='tmp', points=[Point(c[0], c[1]) for c in domain.allowed_area])
     return domain.geometry.is_contain_point(poly_domain, point)
 
 
 def distance(point: 'Point',
              structure: 'Structure',
-             geometry: 'Geometry'):
+             geometry: 'Geometry') -> float:
     polygons = structure.polygons
     distances = []
     for poly in polygons:

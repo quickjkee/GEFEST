@@ -1,10 +1,14 @@
 from pathlib import Path
 
-from gefest.tools.estimators.DL.heat.heat_cnn import CNN
+from gefest.tools.estimators.DL.heat.heat_cnn import HeatCNN
 from gefest.tools.estimators.estimator import Estimator
 
 
 def configurate_estimator(path_to_cnn=False):
+    """
+    ::TODO:: make abstract version for the configuration function and specific realizations
+    (maybe it is possible to name it like configurator class)
+    """
     # ------------
     # User-defined estimator
     # it should be created as object with .estimate() method
@@ -13,7 +17,7 @@ def configurate_estimator(path_to_cnn=False):
         root_path = Path(__file__).parent.parent.parent.parent
         path_to_cnn = f'{root_path}/gefest/tools/estimators/DL/heat/effnet_mean'
 
-    cnn = CNN(path_to_cnn)
+    cnn = HeatCNN(path_to_cnn)
 
     # ------------
     # GEFEST estimator
